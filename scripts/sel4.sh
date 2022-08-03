@@ -28,6 +28,8 @@ test -d "$DIR" || DIR=$PWD
 # Add additional architectures for cross-compiled libraries.
 # Install the tools required to compile seL4.
 as_root apt-get update -q
+as_root dpkg --add-architecture amd64
+as_root dpkg --add-architecture i386
 as_root dpkg --add-architecture armhf
 as_root dpkg --add-architecture armel
 as_root apt-get install -y --no-install-recommends \
@@ -55,15 +57,12 @@ as_root apt-get install -y --no-install-recommends \
     u-boot-tools \
     clang-11 \
     g++-10 \
-    g++-10-aarch64-linux-gnu \
     g++-10-arm-linux-gnueabi \
     g++-10-arm-linux-gnueabihf \
     gcc-10 \
-    gcc-10-aarch64-linux-gnu \
     gcc-10-arm-linux-gnueabi \
     gcc-10-arm-linux-gnueabihf \
     gcc-10-base \
-    gcc-10-multilib \
     gcc-riscv64-unknown-elf \
     libclang-11-dev \
     qemu-system-arm \
@@ -145,7 +144,7 @@ if [ "$MAKE_CACHES" = "yes" ] ; then
         repo sync -j 4
         mkdir build
         pushd build
-            for plat in "sabre" "ia32" "x86_64" "tx1" "tk1 -DARM_HYP=ON"; do
+            for plat in "sabre" "tx1" "tk1 -DARM_HYP=ON"; do
                 # shellcheck disable=SC2086  # no "" around plat, so HYP still works
                 ../init-build.sh -DPLATFORM=$plat
                 ninja

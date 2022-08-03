@@ -35,15 +35,21 @@ possibly_toggle_apt_snapshot
 
 # Get dependencies
 as_root dpkg --add-architecture i386
+as_root dpkg --add-architecture amd64
 as_root apt-get update -q
 as_root apt-get install -y --no-install-recommends \
     acl \
     fakeroot \
+    libtinfo5 \
+    libnuma-dev \
+    cabal-install \
+    llvm \
     linux-libc-dev-i386-cross \
     linux-libc-dev:i386 \
+    gcc-x86-64-linux-gnu \
+    g++-x86-64-linux-gnu \
     pkg-config \
     spin \
-    lib32stdc++-10-dev \
     # end of list
 
 # Required for testing
@@ -84,7 +90,11 @@ as_root pip3 install --no-cache-dir \
     # end of list
 
 # Get stack
-wget -O - https://get.haskellstack.org/ | sh
+
+wget https://downloads.haskell.org/ghcup/unofficial-bindists/stack/2.7.5/stack-2.7.5-linux-aarch64.tar.gz
+tar -xvzf stack-2.7.5-linux-aarch64.tar.gz
+mv -n stack /usr/local/bin/
+chmod +x /usr/local/bin/stack
 echo "export PATH=\"\$PATH:\$HOME/.local/bin\"" >> "$HOME/.bashrc"
 
 # Pick a random group ID, one that won't clash with common user GIDs
@@ -93,11 +103,18 @@ as_root groupadd -g "$STACK_GID" stack
 try_nonroot_first mkdir -p "$STACK_ROOT" || chown_dir_to_user "$STACK_ROOT"
 # Try to use ACLs to keep permissions, but may not work with underlying filesystem
 as_root setfacl -Rm "g:stack:rwx" "$STACK_ROOT"
-echo "allow-different-user: true" >> "$STACK_ROOT/config.yaml"
 as_root chgrp -R stack "$STACK_ROOT"
 as_root chmod -R g+rwx "$STACK_ROOT"
 as_root chmod g+s "$STACK_ROOT"
+touch "$STACK_ROOT/config.yaml"
+echo "allow-different-user: true" >> "$STACK_ROOT/config.yaml"
 echo "export STACK_ROOT=\"$STACK_ROOT\"" >> "$HOME/.bashrc"
+echo "cd /host" >> "$HOME/.bashrc"
+
+echo "\"\e[A\": history-search-backward" >> "$HOME/.inputrc"
+echo "\"\e[B\": history-search-forward" >> "$HOME/.inputrc"
+echo "\"\e[C\": forward-char" >> "$HOME/.inputrc"
+echo "\"\e[D\": backward-char" >> "$HOME/.inputrc"
 
 if [ "$MAKE_CACHES" = "yes" ] ; then
     # Get a project that relys on stack, and use it to init the capDL-tool cache \
@@ -113,7 +130,6 @@ if [ "$MAKE_CACHES" = "yes" ] ; then
         popd
     popd
     rm -rf camkes
-
     # Update the permissions after cache is full
     as_root chgrp -R stack "$STACK_ROOT"
     as_root chmod -R g+rwx "$STACK_ROOT"

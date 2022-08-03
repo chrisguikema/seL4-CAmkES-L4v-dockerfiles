@@ -61,7 +61,7 @@ build_internal_image()
 
     build_args_to_pass_to_docker=$(echo "$build_args" | grep "=" | awk '{print "--build-arg", $1}')
     # shellcheck disable=SC2086
-    $DOCKER_BUILD $DOCKER_FLAGS \
+    $DOCKER_BUILD --platform linux/arm64/v8 $DOCKER_FLAGS \
         --build-arg BASE_IMG="$base_img" \
         --build-arg SCM="$SCM" \
         $build_args_to_pass_to_docker \
@@ -91,7 +91,7 @@ apply_software_to_image()
 
     # NOTE: it's OK to supply docker build-args that aren't requested in the Dockerfile
 
-    $DOCKER_BUILD $DOCKER_FLAGS \
+    $DOCKER_BUILD --platform linux/arm64/v8 $DOCKER_FLAGS \
 		--build-arg BASE_BUILDER_IMG="$DOCKERHUB$prebuilt_img" \
 		--build-arg BASE_IMG="$DOCKERHUB$orig_img" \
         --build-arg SCM="$SCM" \
